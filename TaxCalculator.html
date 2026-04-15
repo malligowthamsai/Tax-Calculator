@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart Income Tax Calculator</title>
+
+<style>
+body{
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg,#667eea,#764ba2);
+    margin:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.container{
+    width:420px;
+    background:#fff;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.2);
+    overflow:hidden;
+}
+
+.header{
+    background:#4a00e0;
+    color:#fff;
+    text-align:center;
+    padding:15px;
+    font-size:20px;
+    font-weight:bold;
+}
+
+.content{
+    padding:20px;
+}
+
+label{
+    font-size:13px;
+    font-weight:600;
+}
+
+input, select{
+    width:100%;
+    padding:8px;
+    margin-top:5px;
+    margin-bottom:12px;
+    border-radius:6px;
+    border:1px solid #ccc;
+}
+
+.result{
+    background:#f8f8f8;
+    padding:10px;
+    border-radius:8px;
+}
+
+.result div{
+    display:flex;
+    justify-content:space-between;
+    margin:6px 0;
+}
+
+.total{
+    font-weight:bold;
+    color:#4a00e0;
+}
+
+.toggle{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:10px;
+}
+
+button{
+    width:100%;
+    padding:10px;
+    border:none;
+    background:#4a00e0;
+    color:#fff;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#3700b3;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<div class="header">💰 Smart Tax Calculator</div>
+
+<div class="content">
+
+<div class="toggle">
+<label>Regime:</label>
+<select id="regime">
+<option value="old">Old</option>
+<option value="new">New</option>
+</select>
+</div>
+
+<label>Category</label>
+<select id="category">
+<option value="normal">Normal</option>
+<option value="senior">Senior (60+)</option>
+<option value="super">Super Senior (80+)</option>
+</select>
+
+<label>Income (₹)</label>
+<input type="number" id="income" placeholder="Enter income">
+
+<div class="result">
+<div><span>Tax</span><span id="tax">0</span></div>
+<div><span>Surcharge</span><span id="surcharge">0</span></div>
+<div><span>Cess (4%)</span><span id="cess">0</span></div>
+<div class="total"><span>Total</span><span id="total">0</span></div>
+</div>
+
+<br>
+<button onclick="resetForm()">Reset</button>
+
+</div>
+</div>
+
+<script>
+function format(num){
+    return "₹" + num.toLocaleString("en-IN");
+}
+
+function getExemption(cat){
+    if(cat==="senior") return 300000;
+    if(cat==="super") return 500000;
+    return 250000;
+}
+
+function calculateOld(income, category){
+    let basic = getExemption(category);
+    let taxable = Math.max(0, income - basic);
+    let tax = 0;
+
+    if(taxable <= 250000)
+        tax = taxable * 0.05;
+    else if(taxable <= 750000)
+        tax = 12500 + (taxable-250000)*0.20;
+    else
+        tax = 112500 + (taxable-750000)*0.30;
+
+    return tax;
+}
+
+function calculateNew(income){
+    let tax = 0;
+
+    if(income <= 300000) return 0;
+    else if(income <= 600000)
+        tax = (income-300000)*0.05;
+    else if(income <= 900000)
+        tax = 15000 + (income-600000)*0.10;
+    else if(income <= 1200000)
+        tax = 45000 + (income-900000)*0.15;
+    else if(income <= 1500000)
+        tax = 90000 + (income-1200000)*0.20;
+    else
+        tax = 150000 + (income-1500000)*0.30;
+
+    return tax;
+}
+
+function calculate(){
+    let income = parseFloat(document.getElementById("income").value) || 0;
+    let category = document.getElementById("category").value;
+    let regime = document.getElementById("regime").value;
+
+    let tax = regime==="old" 
+        ? calculateOld(income, category)
+        : calculateNew(income);
+
+    let surcharge = 0;
+    if(income > 5000000 && income <= 10000000)
+        surcharge = tax * 0.10;
+    else if(income > 10000000)
+        surcharge = tax * 0.15;
+
+    let cess = (tax + surcharge) * 0.04;
+    let total = tax + surcharge + cess;
+
+    document.getElementById("tax").innerText = format(Math.round(tax));
+    document.getElementById("surcharge").innerText = format(Math.round(surcharge));
+    document.getElementById("cess").innerText = format(Math.round(cess));
+    document.getElementById("total").innerText = format(Math.round(total));
+}
+
+function resetForm(){
+    document.getElementById("income").value = "";
+    calculate();
+}
+
+document.getElementById("income").addEventListener("input", calculate);
+document.getElementById("category").addEventListener("change", calculate);
+document.getElementById("regime").addEventListener("change", calculate);
+</script>
+
+</body>
+</html>
